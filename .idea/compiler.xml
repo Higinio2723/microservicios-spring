@@ -7,21 +7,19 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="api-gateway" />
         <module name="discovery-server" />
+        <module name="order-service" />
         <module name="producto-service" />
+        <module name="inventario-service" />
+        <module name="notification-service" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="api-gateway" target="11" />
-      <module name="inventario-service" target="11" />
-      <module name="notification-service" target="11" />
-      <module name="order-service" target="11" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="api-gateway" options="-parameters" />
-      <module name="discovery-server" options="" />
+      <module name="discovery-server" options="-parameters" />
       <module name="inventario-service" options="-parameters" />
       <module name="notification-service" options="-parameters" />
       <module name="order-service" options="-parameters" />
