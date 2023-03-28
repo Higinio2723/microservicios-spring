@@ -1,6 +1,7 @@
 package com.msvc.order.service;
 
-
+import brave.Span;
+import brave.Tracer;
 import com.msvc.order.dto.InventarioResponse;
 import com.msvc.order.dto.OrderLineItemsDto;
 import com.msvc.order.dto.OrderRequest;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.cloud.sleuth.Span;
 //import org.springframework.cloud.sleuth.Tracer;
 //import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,8 +28,8 @@ import java.util.stream.Collectors;
 public class OrderService {
 
 
-//    @Autowired
-//    private KafkaTemplate<String,OrderPlacedEvent> kafkaTemplate;
+    @Autowired
+    private KafkaTemplate<String,OrderPlacedEvent> kafkaTemplate;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -35,8 +37,8 @@ public class OrderService {
     @Autowired
     private WebClient.Builder webCliBuilder;
 
-//    @Autowired
-//    private Tracer tracer;
+    @Autowired
+    private Tracer tracer;
 
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -55,10 +57,10 @@ public class OrderService {
 
         System.out.println("Codigos sku : " + codigoSku);
 
-//        Span inventarioServiceLookup = tracer.nextSpan().name("InventarioServiceLookup");
+        Span inventarioServiceLookup = tracer.nextSpan().name("InventarioServiceLookup");
 
-//        try(Tracer.SpanInScope isLookup = tracer.withSpan(inventarioServiceLookup.start())){
-//            inventarioServiceLookup.tag("call","inventario-service");
+        try(Tracer.SpanInScope isLookup = tracer.withSpanInScope(inventarioServiceLookup.start())){
+            inventarioServiceLookup.tag("call","inventario-service");
 
             InventarioResponse[] inventarioResponseArray = webCliBuilder.build().get()
                     .uri("http://inventario-service/api/inventario",uriBuilder -> uriBuilder.queryParam("codigoSku",codigoSku).build())
@@ -71,15 +73,15 @@ public class OrderService {
 
             if(allProductosInStock){
                 orderRepository.save(order);
-//                kafkaTemplate.send("notificationTopic",new OrderPlacedEvent(order.getNumeroPedido()));
+                kafkaTemplate.send("notificationTopic",new OrderPlacedEvent(order.getNumeroPedido()));
                 return "Pedido ordenado con exito";
             }
             else{
                 throw new IllegalArgumentException("El producto no esta en stock");
             }
-//        }finally {
+        }finally {
 //            inventarioServiceLookup.end();
-//        }
+        }
     }
 
     private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto){
